@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Dorian D3 Franklin - The NIL Network",
-  description:
-    "Official site of Dorian “D3” Franklin — Student-Athlete | Leader | Future Agent | St. John Bosco Football.",
+  title: "Dorian D3 Franklin",
+  description: "...",
+  icons: { icon: "/icon.png" },
 };
 
 
