@@ -21,7 +21,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // --- Helper components ---
-const Section = ({ id, eyebrow, title, subtitle, children }) => (
+        type SectionProps = {
+          id: string;
+          eyebrow?: string;
+          title?: React.ReactNode;
+          subtitle?: React.ReactNode;
+          children: React.ReactNode;
+        };
+
+const Section: React.FC<SectionProps> = ({ id, eyebrow, title, subtitle, children }) => (
   <section id={id} className="w-full py-20 md:py-28">
     <div className="mx-auto max-w-6xl px-4">
       {eyebrow && (
@@ -50,7 +58,13 @@ const Section = ({ id, eyebrow, title, subtitle, children }) => (
   </section>
 );
 
-const Stat = ({ label, value }) => (
+// --- Small UI pieces ---
+type StatProps = {
+  label: string;
+  value: React.ReactNode;
+};
+
+const Stat: React.FC<StatProps> = ({ label, value }) => (
   <div
     className="flex flex-col items-center rounded-2xl border p-6 shadow-sm backdrop-blur-sm"
     style={{ borderColor: "#e6dcc6" }}
@@ -70,7 +84,11 @@ const Stat = ({ label, value }) => (
   </div>
 );
 
-const Pill = ({ children }) => (
+type PillProps = {
+  children: React.ReactNode;
+};
+
+const Pill: React.FC<PillProps> = ({ children }) => (
   <span
     className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm shadow-sm backdrop-blur"
     style={{ background: "rgba(248,243,231,0.8)", border: `1px solid var(--brand-gold)` }}
@@ -78,6 +96,114 @@ const Pill = ({ children }) => (
     <Sparkles className="h-4 w-4" style={{ color: "var(--brand-gold)" }} /> {children}
   </span>
 );
+
+
+// --- Media gallery (uses hooks at top level) ---
+function MediaGallery() {
+  // Videos you provided
+  const videos = [
+    { title: "Game Highlights", type: "youtube" as const, id: "AcxoDAWb8Vk" },
+    { title: "Training Day", type: "youtube" as const, id: "-1wbSlKZFeE" },
+    { title: "Feature Story", type: "youtube" as const, id: "UzFteJrMTX8" },
+  ];
+
+  // React hooks (these store the “open”/“close” state for your popup)
+  const [open, setOpen] = React.useState(false);
+  const [active, setActive] = React.useState<typeof videos[number] | null>(null);
+
+  // When you click Watch
+  const openVideo = (v: typeof videos[number]) => {
+    setActive(v);
+    setOpen(true);
+  };
+
+  // When you click Close
+  const closeVideo = () => {
+    setOpen(false);
+    setTimeout(() => setActive(null), 200); // stops YouTube audio after closing
+  };
+
+  // Thumbnail + embed helpers
+  const getThumb = (v: typeof videos[number]) =>
+    `https://img.youtube.com/vi/${v.id}/hqdefault.jpg`;
+  const getEmbed = (v: typeof videos[number]) =>
+    `https://www.youtube.com/embed/${v.id}?autoplay=1&rel=0&modestbranding=1`;
+
+  // What shows up on screen
+  return (
+    <>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        {videos.map((v, idx) => (
+          <Card
+            key={idx}
+            className="rounded-2xl"
+            style={{ background: "#fffef9", borderColor: "#e6dcc6" }}
+          >
+            <CardHeader>
+              <CardTitle className="text-lg" style={{ color: "var(--brand-navy)" }}>
+                {v.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div
+                className="aspect-video w-full overflow-hidden rounded-xl border"
+                style={{ background: "#e9e1cc", borderColor: "#e6dcc6" }}
+              >
+                <img
+                  src={getThumb(v)}
+                  alt={`${v.title} thumbnail`}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+
+              <Button
+                className="w-full rounded-xl"
+                variant="outline"
+                style={{ borderColor: "var(--brand-gold)", color: "var(--brand-navy)" }}
+                onClick={() => openVideo(v)}
+              >
+                <PlayCircle className="mr-2 h-4 w-4" /> Watch
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Modal for playing video */}
+      {open && active && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4"
+          onClick={closeVideo}
+        >
+          <div
+            className="relative w-full max-w-5xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={closeVideo}
+              className="absolute -top-10 right-0 rounded-lg px-3 py-1 text-sm"
+              style={{ background: "var(--brand-cream)", color: "var(--brand-navy)" }}
+            >
+              Close
+            </button>
+
+            <div className="aspect-video w-full overflow-hidden rounded-2xl bg-black">
+              <iframe
+                key={active.id}
+                src={getEmbed(active)}
+                title={active.title}
+                className="h-full w-full"
+                allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 
 // --- Page ---
 export default function DorianSite() {
@@ -115,9 +241,16 @@ export default function DorianSite() {
 
   // --- Lightweight smoke tests (run once on mount) ---
   React.useEffect(() => {
-    const test = (name, fn) => {
-      try { fn(); console.log(`✅ ${name}`); } catch (e) { console.error(`❌ ${name}:`, e?.message || e); }
-    };
+  const test = (name: string, fn: () => void) => {
+    try {
+      fn();
+      console.log(`✅ ${name}`);
+    } catch (e: unknown) {
+      const msg = (e as { message?: string } | undefined)?.message ?? String(e);
+      console.error(`❌ ${name}:`, msg);
+    } [LINKS.instagram, LINKS.skool, LINKS.trainBuildBrand];
+  };
+  
 
     test("Sections render with IDs", () => {
       ["home", "about", "athletics", "nil", "journal", "podcast", "media", "contact"].forEach((id) => {
@@ -267,7 +400,7 @@ export default function DorianSite() {
               className="mt-4 text-4xl font-bold leading-tight md:text-6xl"
               style={{ color: "var(--brand-navy)" }}
             >
-              Dorian "D3" Franklin
+              Dorian &quot;D3&quot; Franklin 
             </h1>
             <p className="mt-4 max-w-xl text-lg" style={{ color: "var(--brand-gray)" }}>
               St. John Bosco (Bellflower, CA) • 4.0 GPA • Freshman & Sophomore ASB President; Current Junior Vice President.
@@ -408,12 +541,12 @@ export default function DorianSite() {
               </CardTitle>
             </CardHeader>
             <CardContent className="text-sm" style={{ color: "var(--brand-gray)" }}>
-              Dorian’s development is built on discipline, competition, and consistency — balancing strength 
+              Dorians development is built on discipline, competition, and consistency — balancing strength 
               & conditioning, film study, and position mastery year-round.<br></br><br></br>
               He plays with the Trillion Boys 7v7 team and trains with Anthony Brown of Ground Zero — the 
-              same program that’s developed elite athletes like Cam Bynum (Indianapolis Colts). Through 
-              IWILLROUTEU strength and wide receiver training.<br></br><br></br> Dorian continues to refine his speed, precision, and technique as both a receiver and defensive back.
-              "No shortcuts. No excuses. Just keep going."
+              same program thats developed elite athletes like Cam Bynum (Indianapolis Colts). Through 
+              IWILLROUTEU strength and wide receiver training.<br></br><br></br> Dorian continues to refine 
+              his speed, precision, and technique as both a receiver and defensive back. &quot;No shortcuts. No excuses. Just keep going.&quot;
             </CardContent>
           </Card>
         </div>
@@ -455,9 +588,9 @@ export default function DorianSite() {
             </CardHeader>
             <CardContent>
               <ul className="space-y-2 text-sm" style={{ color: "var(--brand-gray)" }}>
-                <li>Height/Weight: 5'11" - 178lbs </li>
+                <li>Height/Weight: 5&apos;11&quot; - 178lbs </li>
                 <li>40: 4.54/ Shuttle / Vert: </li>
-                <li>Wingspan / Hand: TBD</li>
+                <li>Wingspan / Hand: Wide</li>
               </ul>
             </CardContent>
           </Card>
@@ -624,7 +757,7 @@ export default function DorianSite() {
               <li>Body: lifts, mobility, recovery, nutrition</li>
               <li>Brain: goals, habits, gratitude, film notes</li>
               <li>Brand: content prompts, sponsor outreach, analytics</li>
-              <li>Weekly review & game‑day checklists</li>
+              <li>Weekly review & game day checklists</li>
               <li>Quarterly recap to plan the next phase</li>
             </ul>
             <div className="pt-2 text-sm">
@@ -636,112 +769,12 @@ export default function DorianSite() {
 
             {/* MEDIA */}
       <Section
-        id="media"
-        eyebrow="Media"
-        title="Highlights & Press"
-        subtitle="Select clips, reels, and features."
-      >
-        {(() => {
-          const videos = [
-            { title: "Game Highlights", type: "youtube", id: "AcxoDAWb8Vk" },
-            { title: "Training Day", type: "youtube", id: "-1wbSlKZFeE" },
-            { title: "Feature Story", type: "youtube", id: "UzFteJrMTX8" },
-          ];
-
-          const [open, setOpen] = React.useState(false);
-          const [active, setActive] = React.useState(videos[0]);
-
-          const openVideo = (v) => {
-            setActive(v);
-            setOpen(true);
-          };
-          const closeVideo = () => {
-            setOpen(false);
-            setTimeout(() => setActive(null), 200);
-          };
-
-          const getThumb = (v) =>
-            `https://img.youtube.com/vi/${v.id}/hqdefault.jpg`;
-
-          const getEmbed = (v) =>
-            `https://www.youtube.com/embed/${v.id}?autoplay=1&rel=0&modestbranding=1`;
-
-          return (
-            <>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                {videos.map((v, idx) => (
-                  <Card
-                    key={idx}
-                    className="rounded-2xl"
-                    style={{ background: "#fffef9", borderColor: "#e6dcc6" }}
-                  >
-                    <CardHeader>
-                      <CardTitle className="text-lg" style={{ color: "var(--brand-navy)" }}>
-                        {v.title}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div
-                        className="aspect-video w-full overflow-hidden rounded-xl border"
-                        style={{ background: "#e9e1cc", borderColor: "#e6dcc6" }}
-                      >
-                        <img
-                          src={getThumb(v)}
-                          alt={`${v.title} thumbnail`}
-                          className="h-full w-full object-cover"
-                          onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).style.display = "none";
-                          }}
-                        />
-                      </div>
-
-                      <Button
-                        className="w-full rounded-xl"
-                        variant="outline"
-                        style={{ borderColor: "var(--brand-gold)", color: "var(--brand-navy)" }}
-                        onClick={() => openVideo(v)}
-                      >
-                        <PlayCircle className="mr-2 h-4 w-4" /> Watch
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              {/* Modal */}
-              {open && active && (
-                <div
-                  className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4"
-                  onClick={closeVideo}
-                >
-                  <div
-                    className="relative w-full max-w-5xl"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      onClick={closeVideo}
-                      className="absolute -top-10 right-0 rounded-lg px-3 py-1 text-sm"
-                      style={{ background: "var(--brand-cream)", color: "var(--brand-navy)" }}
-                    >
-                      Close
-                    </button>
-
-                    <div className="aspect-video w-full overflow-hidden rounded-2xl bg-black">
-                      <iframe
-                        key={active.id}
-                        src={getEmbed(active)}
-                        title={active.title}
-                        className="h-full w-full"
-                        allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                        allowFullScreen
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          );
-        })()}
+      id="media"
+  eyebrow="Media"
+  title="Highlights & Press"
+  subtitle="Select clips, reels, and features."
+>
+  <MediaGallery />
       </Section>
 
 
